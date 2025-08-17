@@ -1,0 +1,10 @@
+name = "lean-experiment"
+version = "0.1.0"
+defaultTargets = ["lean-experiment"]
+
+[[lean_lib]]
+name = "LeanExperiment"
+
+[[lean_exe]]
+name = "lean-experiment"
+root = "Main"
