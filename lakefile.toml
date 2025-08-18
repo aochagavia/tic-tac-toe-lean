@@ -1,10 +1,10 @@
-name = "lean-experiment"
+name = "tic-tac-toe"
 version = "0.1.0"
-defaultTargets = ["lean-experiment"]
+defaultTargets = ["tic-tac-toe"]
 
 [[lean_lib]]
-name = "LeanExperiment"
+name = "TicTacToe"
 
 [[lean_exe]]
-name = "lean-experiment"
+name = "tic-tac-toe"
 root = "Main"
