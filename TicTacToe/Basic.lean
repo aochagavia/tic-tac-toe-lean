@@ -59,21 +59,16 @@ def checkWin (board : Board) (player : Player) : Bool :=
     line.all (fun pos =>
       board.get pos == playerCell))
 
-def makeMove {player : Player} (state : TicTacToeState) (hInProgress : state.status = GameStatus.InProgress player) (pos : Position) (_ : isEmptyPosition state.board pos) : TicTacToeState :=
-  match hInProgress' : state.status with
-  | GameStatus.InProgress currentPlayer =>
-    let newBoard := state.board.set pos.val (Cell.Occupied currentPlayer)
-    let newStatus :=
-      if checkWin newBoard currentPlayer then
-        GameStatus.Won currentPlayer
-      else if isBoardFull newBoard then
-        GameStatus.Draw
-      else
-        GameStatus.InProgress (switchPlayer currentPlayer)
-    { board := newBoard, status := newStatus }
-  | GameStatus.Won _ | GameStatus.Draw => by
-    rw [hInProgress'] at hInProgress
-    simp at hInProgress
+def makeMove {player : Player} (state : TicTacToeState) (pos : Position) (_ : state.status = GameStatus.InProgress player) (_ : isEmptyPosition state.board pos) : TicTacToeState :=
+  let newBoard := state.board.set pos.val (Cell.Occupied player)
+  let newStatus :=
+    if checkWin newBoard player then
+      GameStatus.Won player
+    else if isBoardFull newBoard then
+      GameStatus.Draw
+    else
+      GameStatus.InProgress (switchPlayer player)
+  { board := newBoard, status := newStatus }
 
 -- Proof: players alternate after each move
 theorem playersAlternateAfterMove
@@ -84,7 +79,7 @@ theorem playersAlternateAfterMove
   {hIsEmpty : isEmptyPosition state.board pos}
   {newState : TicTacToeState}
   (
-    h: makeMove state hInProgress pos hIsEmpty = newState
+    h: makeMove state pos hInProgress hIsEmpty = newState
   ) : (
     newState.status = GameStatus.InProgress (switchPlayer currentPlayer) ∨
     newState.status = GameStatus.Won currentPlayer ∨
@@ -94,7 +89,7 @@ theorem playersAlternateAfterMove
   simp at h'
   rw [Eq.symm h']
 
-  match hMatch : (makeMove state hInProgress pos hIsEmpty).status with
+  match hMatch : (makeMove state pos hInProgress hIsEmpty).status with
   | GameStatus.Won winner =>
     -- Get ourselves a clear goal
     right
@@ -120,3 +115,23 @@ theorem playersAlternateAfterMove
     right
     right
     simp
+
+-- Proof: cell gets marked after move with the player's mark
+theorem cellMarkedAfterMove
+  {state : TicTacToeState}
+  {currentPlayer : Player}
+  {pos : Position}
+  {hInProgress : state.status = GameStatus.InProgress currentPlayer}
+  {hIsEmpty : isEmptyPosition state.board pos}
+  {newState : TicTacToeState}
+  (
+    h: makeMove state pos hInProgress hIsEmpty = newState
+  ) : (
+    newState.board.get pos = Cell.Occupied currentPlayer
+  ) := by
+  unfold makeMove at h
+  let h' := congrArg (fun x : TicTacToeState => x.board) h
+  simp at h'
+  rw [Eq.symm h']
+  unfold Vector.set Vector.get
+  simp

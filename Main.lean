@@ -76,7 +76,7 @@ partial def gameLoop (state : TicTacToeState) : IO Unit := do
     | some pos =>
       -- Make the move if the position is empty
       match hIsEmpty : isEmptyPosition state.board pos with
-      | true => gameLoop (makeMove state hInProgress pos hIsEmpty)
+      | true => gameLoop (makeMove state pos hInProgress hIsEmpty)
       | false =>
         -- The position is already occupied
         IO.println "Invalid move! Position already occupied. Try again."
