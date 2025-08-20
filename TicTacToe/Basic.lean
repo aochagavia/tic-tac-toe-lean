@@ -59,6 +59,51 @@ def checkWin (board : Board) (player : Player) : Bool :=
     line.all (fun pos =>
       board.get pos == playerCell))
 
+def wellFormedGame (state : TicTacToeState) : Bool :=
+  match state.status with
+  | GameStatus.InProgress _ =>
+      !isBoardFull state.board
+      && !checkWin state.board Player.X
+      && !checkWin state.board Player.O
+  | GameStatus.Won Player.X =>
+      checkWin state.board Player.X && !checkWin state.board Player.O
+  | GameStatus.Won Player.O =>
+      !checkWin state.board Player.X && checkWin state.board Player.O
+  | GameStatus.Draw =>
+      isBoardFull state.board
+      && !checkWin state.board Player.X
+      && !checkWin state.board Player.O
+
+theorem initialGameStateIsWellFormed (state : TicTacToeState) {h: state = initialGameState} : wellFormedGame state := by
+  unfold initialGameState at h
+  unfold wellFormedGame
+  let hStatus := congrArg (fun s => s.status) h
+  simp at hStatus
+  rw [hStatus]
+  simp
+
+  let hBoard := congrArg (fun s => s.board) h
+  simp at hBoard
+  rw [hBoard]
+
+  have hGetFromEmptyBoard (i : Position) : Vector.get emptyBoard i = Cell.Empty := by
+    unfold emptyBoard Vector.replicate Vector.get Vector.toArray
+    simp
+
+  have hBoardNotFull : isBoardFull emptyBoard = false := by
+    unfold isBoardFull
+    simp
+    refine ⟨0, ?_⟩
+    rw [hGetFromEmptyBoard (0 : Fin 9 )]
+    simp
+    trivial
+
+  have hCheckWinEmpty (p : Player) : checkWin emptyBoard p = false := by
+    unfold checkWin
+    simp [hGetFromEmptyBoard]
+
+  simp [hCheckWinEmpty Player.X, hCheckWinEmpty Player.O, hBoardNotFull]
+
 def makeMove {player : Player} (state : TicTacToeState) (pos : Position) (_ : state.status = GameStatus.InProgress player) (_ : isEmptyPosition state.board pos) : TicTacToeState :=
   let newBoard := state.board.set pos.val (Cell.Occupied player)
   let newStatus :=
