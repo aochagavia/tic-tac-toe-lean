@@ -7,12 +7,12 @@ Proofs:
 - The empty game is well-formed, as well as any well-formed game that has passed through the
   `makeMove` function
 
-Pending:
+Next:
+
+- A well-formed game has a sound distribution of cells (e.g. you can't have two `X` marks and zero `O` marks)
+
+Later:
 
 - Implement "trivial" AI, that marks the first empty cell it sees. Prove that it can lose. Should be easy to prove by contradiction (i.e. assume the player never loses, then provide a counterexample).
 - Implement "simple" AI, that marks the first empty cell it sees, unless there is immediate danger that should be averted. Prove that it can lose. Should be easy to prove by contradiction (i.e. assume the player never loses, then provide a counterexample).
 - Implement unbeatable AI, that looks two steps ahead and never loses. Prove that it can't lose.
-
-Other interesting proofs we could write:
-
--- The game ends after a maximum of 9 moves
