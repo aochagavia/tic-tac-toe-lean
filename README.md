@@ -3,7 +3,9 @@
 Proofs:
 
 - Players alternate after each move
-- A cell get marked after each move
+- A cell gets marked after each move
+- The empty game is well-formed, as well as any well-formed game that has passed through the
+  `makeMove` function
 
 Pending:
 
@@ -14,6 +16,3 @@ Pending:
 Other interesting proofs we could write:
 
 -- The game ends after a maximum of 9 moves
--- If the board has a winning line after X moves, the game is in the Win state.
--- If the board has a winning line after X moves, there are no other winning lines.
--- If there is a draw, there are no winning lines.

@@ -61,7 +61,7 @@ def displayGameStatus (status : GameStatus) : IO Unit :=
   | GameStatus.Draw =>
     IO.println "It's a draw!"
 
-partial def gameLoop (state : TicTacToeState) : IO Unit := do
+partial def gameLoop (state : TicTacToeState) (hWellFormed : wellFormedGame state) : IO Unit := do
   displayBoard state.board
   displayGameStatus state.status
 
@@ -72,15 +72,17 @@ partial def gameLoop (state : TicTacToeState) : IO Unit := do
     match moveOpt with
     | none =>
       -- Invalid input, try again
-      gameLoop state
+      gameLoop state hWellFormed
     | some pos =>
       -- Make the move if the position is empty
       match hIsEmpty : isEmptyPosition state.board pos with
-      | true => gameLoop (makeMove state pos hInProgress hIsEmpty)
+      | true =>
+        let newState := makeMove state pos hInProgress hIsEmpty hWellFormed
+        gameLoop newState makeMovePreservesWellFormedness
       | false =>
         -- The position is already occupied
         IO.println "Invalid move! Position already occupied. Try again."
-        gameLoop state
+        gameLoop state hWellFormed
   | _ =>
     IO.println "\nThanks for playing!"
 
@@ -89,4 +91,4 @@ def main : IO Unit := do
   displayPositionGuide
   IO.println "\nLet's start the game!"
   IO.println ""
-  gameLoop initialGameState
+  gameLoop initialGameState (@initialGameStateIsWellFormed initialGameState (by trivial))
