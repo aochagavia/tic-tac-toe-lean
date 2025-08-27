@@ -2,17 +2,13 @@
 
 Proofs:
 
-- Players alternate after each move
-- A cell gets marked after each move
-- The empty game is well-formed, as well as any well-formed game that has passed through the
-  `makeMove` function
-
-Next:
-
-- A well-formed game has a sound distribution of cells (e.g. you can't have two `X` marks and zero `O` marks)
+- Players alternate after each move (`playersAlternateAfterMove`)
+- A cell gets marked after each move (`cellMarkedAfterMove`)
+- The initial game state is well-formed (`initialGameStateIsWellFormed`)
+- Any well-formed game that has passed through the `makeMove` function is also well-formed (`makeMovePreservesWellFormedness`)
 
 Later:
 
-- Implement "trivial" AI, that marks the first empty cell it sees. Prove that it can lose. Should be easy to prove by contradiction (i.e. assume the player never loses, then provide a counterexample).
-- Implement "simple" AI, that marks the first empty cell it sees, unless there is immediate danger that should be averted. Prove that it can lose. Should be easy to prove by contradiction (i.e. assume the player never loses, then provide a counterexample).
+- Implement "trivial" AI, that marks the first empty cell it sees. Prove that it can lose.
+- Implement "simple" AI, that marks the first empty cell it sees, unless there is immediate danger that should be averted. Prove that it can lose.
 - Implement unbeatable AI, that looks two steps ahead and never loses. Prove that it can't lose.

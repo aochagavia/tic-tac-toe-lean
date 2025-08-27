@@ -52,10 +52,10 @@ def getPlayerMove (player : Player) : IO (Option Position) := do
     IO.println "Invalid input! Please enter a number between 0 and 8."
     return none
 
-def displayGameStatus (status : GameStatus) : IO Unit :=
-  match status with
-  | GameStatus.InProgress player =>
-    IO.println s!"Game in progress. Current player: {player}"
+def displayGameStatus (state : TicTacToeState) : IO Unit :=
+  match state.status with
+  | GameStatus.InProgress =>
+    IO.println s!"Game in progress. Current player: {currentPlayer state}"
   | GameStatus.Won player =>
     IO.println s!"Player {player} wins!"
   | GameStatus.Draw =>
@@ -63,12 +63,12 @@ def displayGameStatus (status : GameStatus) : IO Unit :=
 
 partial def gameLoop (state : TicTacToeState) (hWellFormed : wellFormedGame state) : IO Unit := do
   displayBoard state.board
-  displayGameStatus state.status
+  displayGameStatus state
 
   match hInProgress : state.status with
-  | GameStatus.InProgress currentPlayer => do
+  | GameStatus.InProgress => do
     -- Get player move
-    let moveOpt ← getPlayerMove currentPlayer
+    let moveOpt ← getPlayerMove (currentPlayer state)
     match moveOpt with
     | none =>
       -- Invalid input, try again
