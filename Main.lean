@@ -11,7 +11,6 @@ def displayCell (cell : Cell) : String :=
   | Cell.Occupied p => toString p
 
 def displayBoard (board : Board) : IO Unit := do
-  IO.println "Current board:"
   IO.println "   0   1   2"
   for i in [0, 3, 6] do
     let row := i / 3
@@ -36,40 +35,49 @@ def displayPositionGuide : IO Unit := do
   IO.println "   ---------"
   IO.println "2  6 | 7 | 8"
 
-def getPlayerMove (player : Player) : IO (Option Position) := do
-  IO.println s!"\nPlayer {player}'s turn"
-  IO.print "Enter position (0-8): "
+def getPlayerMove : IO (Option (Fin 9)) := do
+  let parseCoordinate (s : String) : Option (Fin 3) :=
+    s.trim.toNat? >>= (fun n =>
+      if h : n < 3 then
+        some ⟨n, h⟩
+      else
+        none
+    )
+  let errorMsg := "Invalid position! Please enter the x and y coordinates separated by a space, and with values between 0 and 2."
+
+  IO.print "Enter coordinates (e.g. 0 2): "
   let input ← (← IO.getStdin).getLine
-  let trimmed := input.trim
-  match trimmed.toNat? with
-  | some n =>
-    if h : n < 9 then
-      return some ⟨n, h⟩
-    else
-      IO.println "Invalid position! Please enter a number between 0 and 8."
-      return none
-  | none =>
-    IO.println "Invalid input! Please enter a number between 0 and 8."
+  let coords := input.split (fun c => c.isWhitespace)
+  |> List.filter (fun c => c != "")
+  |> List.map parseCoordinate
+  match coords with
+  | [.some x, .some y] =>
+    let x' : Fin 9 := x.castLT (by cases x; simp; omega)
+    let y' : Fin 9 := y.castLT (by cases y; simp; omega)
+    return (Option.some (y' * 3 + x'))
+  | _ =>
+    IO.println errorMsg
     return none
 
 def displayGameStatus (state : TicTacToeState) : IO Unit :=
   match state.status with
   | GameStatus.InProgress =>
-    IO.println s!"Game in progress. Current player: {currentPlayer state}"
+    IO.println s!"Player {currentPlayer state}'s turn..."
   | GameStatus.Won player =>
     IO.println s!"Player {player} wins!"
   | GameStatus.Draw =>
     IO.println "It's a draw!"
 
 partial def gameLoop (state : TicTacToeState) (hWellFormed : wellFormedGame state) : IO Unit := do
+  IO.println ""
   displayBoard state.board
+  IO.println ""
   displayGameStatus state
 
   match hInProgress : state.status with
   | GameStatus.InProgress => do
     -- Get player move
-    let moveOpt ← getPlayerMove (currentPlayer state)
-    match moveOpt with
+    match ← getPlayerMove with
     | none =>
       -- Invalid input, try again
       gameLoop state hWellFormed
@@ -81,14 +89,11 @@ partial def gameLoop (state : TicTacToeState) (hWellFormed : wellFormedGame stat
         gameLoop newState makeMovePreservesWellFormedness
       | false =>
         -- The position is already occupied
-        IO.println "Invalid move! Position already occupied. Try again."
+        IO.println "Invalid move! Position already occupied..."
         gameLoop state hWellFormed
   | _ =>
     IO.println "\nThanks for playing!"
 
 def main : IO Unit := do
   IO.println "Welcome to Tic-Tac-Toe!"
-  displayPositionGuide
-  IO.println "\nLet's start the game!"
-  IO.println ""
   gameLoop initialGameState (@initialGameStateIsWellFormed initialGameState (by trivial))

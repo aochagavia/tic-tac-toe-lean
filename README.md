@@ -1,6 +1,18 @@
 # Formalized tic-tac-toe, using Lean 4
 
-Proofs:
+### Play
+
+Assuming you have Lean 4 [installed](https://lean-lang.org/install/manual/), you can play
+tic-tac-toe against yourself by running the following command:
+
+```bash
+lake exe tic-tac-toe
+```
+
+### Proofs
+
+The [TicTacToe.Basic](./TicTacToe/Basic.lean) module contains a definition of a tic-tac-toe game
+along with the following proofs:
 
 - Players alternate after each move (see `playersAlternateAfterMove`)
 - A cell gets marked after each move, with the mark of the current player (see
@@ -19,7 +31,7 @@ Note: the proofs that don't reference a specific theorem are proven by
 
 ### TODO
 
-- Implement "trivial" AI, that marks the first empty cell it sees. Prove that it can lose.
+- Implement "trivial" AI, that marks the first empty cell it sees.
 - Implement "simple" AI, that marks the first empty cell it sees, unless there is immediate danger
-  that should be averted. Prove that it can lose.
+  that should be averted.
 - Implement unbeatable AI, that looks two steps ahead and never loses. Prove that it can't lose.
