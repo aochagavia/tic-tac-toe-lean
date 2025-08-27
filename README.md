@@ -11,6 +11,9 @@ lake exe tic-tac-toe
 
 ### Proofs
 
+_Note: I'm an absolute newbie in Lean 4, so my proofs are probably not the right source to learn
+from. You have been warned._
+
 The [TicTacToe.Basic](./TicTacToe/Basic.lean) module contains a definition of a tic-tac-toe game
 along with the following proofs:
 
@@ -22,8 +25,7 @@ along with the following proofs:
 - If the game is in-progress, there are no winning configurations on the board (i.e. no line of
   three similar marks)
 - If the game has a winner, only that player has a winning board configuration
-- If the game ended in a draw, the board is full and there are there are no winning configurations
-  on it
+- If the game ended in a draw, the board is full and there are no winning configurations on it
 
 Note: the proofs that don't reference a specific theorem are proven by
 `makeMovePreservesWellFormedness`, which ensures a board is always well-formed. See also
