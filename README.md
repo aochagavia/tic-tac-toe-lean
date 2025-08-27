@@ -1,6 +1,6 @@
 # Formalized tic-tac-toe, using Lean 4
 
-Proofs (see `makeMovePreservesWellFormedness` when no other proof is referenced):
+Proofs:
 
 - Players alternate after each move (see `playersAlternateAfterMove`)
 - A cell gets marked after each move, with the mark of the current player (see
@@ -13,10 +13,13 @@ Proofs (see `makeMovePreservesWellFormedness` when no other proof is referenced)
 - If the game ended in a draw, the board is full and there are there are no winning configurations
   on it
 
+Note: the proofs that don't reference a specific theorem are proven by
+`makeMovePreservesWellFormedness`, which ensures a board is always well-formed. See also
+[TicTacToe.Tests](./TicTacToe/Tests.lean) for examples of well-formed and ill-formed game states.
+
 ### TODO
 
 - Implement "trivial" AI, that marks the first empty cell it sees. Prove that it can lose.
 - Implement "simple" AI, that marks the first empty cell it sees, unless there is immediate danger
   that should be averted. Prove that it can lose.
 - Implement unbeatable AI, that looks two steps ahead and never loses. Prove that it can't lose.
-- Write out examples of well-formed and ill-formed states, and ensure that our `wellFormedGame` definition matches what we expect.

@@ -184,7 +184,7 @@ deriving Repr, DecidableEq
 theorem cellNeqEmptyOccupied {player} : (Cell.Empty == Cell.Occupied player) = false := by
   grind
 
-def Board := Vector Cell 9
+def Board := Vector Cell 9 deriving Repr
 def Position := Fin 9
 
 instance : Membership Cell Board := by
@@ -200,6 +200,7 @@ deriving Repr, DecidableEq
 structure TicTacToeState where
   board : Board
   status : GameStatus
+deriving Repr
 
 def emptyBoard : Board :=
   Vector.replicate 9 Cell.Empty
