@@ -10,18 +10,6 @@ theorem vector_count_set_other {α n} {i : Fin n} {pred : α → Bool} {value : 
   let hCountSet := Vector.countP_set (p := pred) (xs := xs) (a := value) i.2
   simp [hCountSet, hNew, hOld]
 
-theorem vectorSetGetDistinct
-    {α : Type} {n : Nat} (xs : Vector α n) (value : α)
-    (iSet iGet : Fin n) (hDistinct : iSet ≠ iGet) :
-    (Vector.set xs iSet value).get iGet = xs.get iGet := by
-  have hDistinct' : iSet.val ≠ iGet.val := by
-    intro h
-    apply hDistinct
-    apply Fin.ext
-    simp [h]
-  let h := Array.getElem_set_ne (xs := xs.toArray) (i := iSet) (j := iGet) (by simp [iSet.2]) (by simp [iGet.2]) (v := value) hDistinct'
-  simp [Vector.get, h]
-
 theorem tupToAnd {a b c d : Bool} (h : (a, b) = (c, d)) : (a = c) ∧ b = d := by grind
 
 theorem countDisjointList {xs} (hDisjoint : ∀ a, (pred1 a → ¬pred2 a) ∧ (pred2 a → ¬pred1 a)) : List.countP pred1 xs + List.countP pred2 xs = List.countP (fun x => pred1 x || pred2 x) xs := by
@@ -275,9 +263,16 @@ theorem noWinWithoutOwnMove
   -- Other cells were not modified
   have getFromNewBoardRespectsPreviouslyOccupied {i} {hIsNotPos : ¬pos = i}
     : Vector.get newBoard i = Vector.get board i := by
-    simp at hIsNotPos
-    let hGetFromBoardUnchanged := vectorSetGetDistinct (xs := board) (value := Cell.Occupied (switchPlayer player)) (hDistinct := hIsNotPos)
-    simp [newBoard, hGetFromBoardUnchanged]
+    have hDistinct : pos.val ≠ i.val := by
+      intro h
+      apply hIsNotPos
+      apply Fin.ext
+      simp [h]
+
+    let hGetFromBoardUnchanged := Vector.getElem_set_ne (xs := board) (x := Cell.Occupied (switchPlayer player)) pos.2 i.2 (h := hDistinct)
+    simp [newBoard]
+    simp only [Vector.get, Fin.cast, Vector.getElem_toArray]
+    simp [hGetFromBoardUnchanged]
 
   simp [checkWin] at hNoWin
   simp [checkWin]
