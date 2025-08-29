@@ -1,20 +1,5 @@
 -- Helper theorems
 
-def vector_cons : α → Vector α n → Vector α (Nat.succ n)
-  | a, ⟨v, h⟩ =>
-    have hSize : (a :: v.toList).toArray.size = Nat.succ n := by grind
-    Vector.mk (n := Nat.succ n) (List.toArray (a :: Array.toList v)) hSize
-
-theorem vector_cons_equivalence {α} {xs : Vector α (Nat.succ n)} : xs = vector_cons xs.head xs.tail := by
-  apply Vector.ext
-  intro i
-  induction i with
-  | zero => simp [vector_cons, Vector.head]
-  | succ i ih =>
-    intro hIndexWithinBounds
-    unfold vector_cons
-    simp
-
 theorem vector_count_set {α n} {i : Fin n} {pred : α → Bool} {value : α} {xs : Vector α n} {hOld : ¬pred xs[i]} {hNew : pred value} : Vector.countP pred (Vector.set xs i value) = Vector.countP pred xs + 1 := by
   simp at hOld
   let hCountSet := Vector.countP_set (p := pred) (xs := xs) (a := value) i.2
@@ -25,65 +10,17 @@ theorem vector_count_set_other {α n} {i : Fin n} {pred : α → Bool} {value : 
   let hCountSet := Vector.countP_set (p := pred) (xs := xs) (a := value) i.2
   simp [hCountSet, hNew, hOld]
 
-theorem vector_cons_set {xs : Vector α n} {i : Fin (Nat.succ n)} : (vector_cons x xs).set i a = if hEq : i.val == 0 then vector_cons a xs else let n' := i.pred (by simp at hEq; simp [hEq]); vector_cons x (xs.set n' a) := by
-  by_cases h : (i = 0)
-  . simp [h, vector_cons, Vector.set]
-  . simp [h, vector_cons, Vector.set]
-    let i' := Fin.pred i h
-    rw [List.set.eq_def]
-    cases i using Fin.cases with
-    | zero => simp; grind
-    | succ => simp
-
-theorem vector_cons_get {xs : Vector α n} {i : Fin (Nat.succ n)} : (vector_cons x xs).get i = if hEq : i.val == 0 then x else let n' := i.pred (by simp at hEq; simp [hEq]); xs.get n' := by
-  by_cases h : (i = 0)
-  . simp [h, vector_cons, Vector.get]
-  . simp [h, vector_cons, Vector.get]
-    let i' := Fin.pred i h
-    simp only [GetElem.getElem]
-    rw [List.get.eq_def]
-    simp
-    cases i using Fin.cases with
-    | zero => simp; grind
-    | succ => simp [Vector.get]
-
-theorem vectorSetGetUnchanged
+theorem vectorSetGetDistinct
     {α : Type} {n : Nat} (xs : Vector α n) (value : α)
     (iSet iGet : Fin n) (hDistinct : iSet ≠ iGet) :
     (Vector.set xs iSet value).get iGet = xs.get iGet := by
-  -- Revert these values, because their types vary per case
-  revert xs iSet iGet
-  cases n with
-  | zero =>
-      intro _ iSet
-      exact Fin.elim0 iSet
-  | succ n' =>
-      -- Going into the structure of the indices lets Lean see that they target different places
-      -- in the array
-      intro xs iSet iGet hDistinct
-      cases iSet using Fin.cases with
-      | zero =>
-          cases iGet using Fin.cases with
-          | zero => contradiction -- iSet = iGet = zero
-          | succ iGet' => simp [Vector.set, Vector.get] -- iGet > iSet
-      | succ iSet' =>
-          cases iGet using Fin.cases with
-          | zero => simp [Vector.set, Vector.get] -- iGet < iSet
-          | succ iGet' =>
-              -- iGet != iSet, but Lean can't see it because they are both `succ`, so we'll use
-              -- induction
-
-              rw [
-                vector_cons_equivalence (xs := xs),
-                vector_cons_set (x := xs.head) (xs := xs.tail) (i := iSet'.succ) (a := value),
-                vector_cons_get (x := xs.head) (xs := xs.tail) (i := iGet'.succ),
-              ]
-
-              have hDistinct' : iSet' ≠ iGet' := by grind
-              let ih := vectorSetGetUnchanged xs.tail value iSet' iGet' hDistinct'
-              by_cases h : (↑iSet'.succ == 0)
-              . simpa [h]
-              . simpa [h]
+  have hDistinct' : iSet.val ≠ iGet.val := by
+    intro h
+    apply hDistinct
+    apply Fin.ext
+    simp [h]
+  let h := Array.getElem_set_ne (xs := xs.toArray) (i := iSet) (j := iGet) (by simp [iSet.2]) (by simp [iGet.2]) (v := value) hDistinct'
+  simp [Vector.get, h]
 
 theorem tupToAnd {a b c d : Bool} (h : (a, b) = (c, d)) : (a = c) ∧ b = d := by grind
 
@@ -339,7 +276,7 @@ theorem noWinWithoutOwnMove
   have getFromNewBoardRespectsPreviouslyOccupied {i} {hIsNotPos : ¬pos = i}
     : Vector.get newBoard i = Vector.get board i := by
     simp at hIsNotPos
-    let hGetFromBoardUnchanged := vectorSetGetUnchanged (xs := board) (value := Cell.Occupied (switchPlayer player)) (hDistinct := hIsNotPos)
+    let hGetFromBoardUnchanged := vectorSetGetDistinct (xs := board) (value := Cell.Occupied (switchPlayer player)) (hDistinct := hIsNotPos)
     simp [newBoard, hGetFromBoardUnchanged]
 
   simp [checkWin] at hNoWin
