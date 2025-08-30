@@ -33,7 +33,5 @@ Note: the proofs that don't reference a specific theorem are proven by
 
 ### TODO
 
-- Implement "trivial" AI, that marks the first empty cell it sees.
-- Implement "simple" AI, that marks the first empty cell it sees, unless there is immediate danger
-  that should be averted.
+- Prove that defensive AI can only lose when two cells are under attack at the same time.
 - Implement unbeatable AI, that looks two steps ahead and never loses. Prove that it can't lose.
