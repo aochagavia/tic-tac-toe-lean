@@ -10,82 +10,25 @@ theorem vector_count_set_other {α n} {i : Fin n} {pred : α → Bool} {value : 
   let hCountSet := Vector.countP_set (p := pred) (xs := xs) (a := value) i.2
   simp [hCountSet, hNew, hOld]
 
-theorem tupToAnd {a b c d : Bool} (h : (a, b) = (c, d)) : (a = c) ∧ b = d := by grind
-
-theorem countDisjointList {xs} (hDisjoint : ∀ a, (pred1 a → ¬pred2 a) ∧ (pred2 a → ¬pred1 a)) : List.countP pred1 xs + List.countP pred2 xs = List.countP (fun x => pred1 x || pred2 x) xs := by
+theorem countDisjointList
+    {xs : List α} (hDisjoint : ∀ a, (pred1 a → ¬pred2 a) ∧ (pred2 a → ¬pred1 a)) :
+    xs.countP pred1 + xs.countP pred2 = xs.countP (fun x => pred1 x || pred2 x) := by
   match xs with
-  | .nil => simp
-  | .cons head .nil =>
-    simp
-    match hPred : (pred1 head, pred2 head) with
-    | (true, true)   =>
-      let hDisjoint := hDisjoint head
-      simp [tupToAnd hPred] at hDisjoint
-    | (true, false)  => simp [tupToAnd hPred]
-    | (false, true)  => simp [tupToAnd hPred]
-    | (false, false) => simp [tupToAnd hPred]
-  | .cons head tail =>
-    let hRec := countDisjointList (xs := tail) hDisjoint
-    simp [List.countP_cons]
-    match hPred : (pred1 head, pred2 head) with
-    | (true, true)   =>
-      let hDisjoint := hDisjoint head
-      simp [tupToAnd hPred] at hDisjoint
-    | (true, false)  =>
-      simp [tupToAnd hPred]
-      let hAssoc := Nat.add_assoc (List.countP pred1 tail) 1 (List.countP pred2 tail)
-      let hComm := Nat.add_comm 1 (List.countP pred2 tail)
-      rw [hAssoc, hComm]
-      let hAssoc' := Nat.add_assoc (List.countP pred1 tail) (List.countP pred2 tail) 1
-      simp [← hAssoc', hRec]
-    | (false, true)  =>
-      simp [tupToAnd hPred]
-      let hAssoc := Nat.add_assoc (List.countP pred1 tail) (List.countP pred2 tail) 1
-      let hComm := Nat.add_comm 1 (List.countP pred2 tail)
-      rw [← hAssoc, hRec]
-    | (false, false) => simp [tupToAnd hPred, hRec]
+  | []      => simp
+  | [_]     => grind
+  | _ :: tl => have := countDisjointList (xs := tl) hDisjoint; grind
 
 theorem countDisjoint {n} {pred1 pred2 : α → Bool} {xs : Vector α n} (hDisjoint : ∀ a, (pred1 a → ¬pred2 a) ∧ (pred2 a → ¬pred1 a)) : Vector.countP pred1 xs + Vector.countP pred2 xs = Vector.countP (fun x => pred1 x || pred2 x) xs := by
   simp [← Vector.countP_toList]
   exact countDisjointList (xs := xs.toList) hDisjoint
 
-theorem countCompleteList {pred1 pred2 : α → Bool} {xs : List α} (hDisjoint : ∀ a, pred1 a != pred2 a) (hComplete : ∀ a, pred1 a || pred2 a)
-  : List.countP pred1 xs + List.countP pred2 xs = List.length xs := by
+theorem countCompleteList
+    {xs : List α} (hDisjoint : ∀ a, pred1 a != pred2 a) (hComplete : ∀ a, pred1 a || pred2 a) :
+    xs.countP pred1 + xs.countP pred2 = xs.length := by
   match xs with
-  | .nil => simp
-  | .cons head .nil =>
-    simp
-    match hPred : (pred1 head, pred2 head) with
-    | (true, true)   =>
-      let hDisjoint := hDisjoint head
-      simp [tupToAnd hPred] at hDisjoint
-    | (true, false)  => simp [tupToAnd hPred]
-    | (false, true)  => simp [tupToAnd hPred]
-    | (false, false) =>
-      let h := hComplete head
-      simp [tupToAnd hPred] at h
-  | .cons head tail =>
-    let hRec := countCompleteList (xs := tail) hDisjoint hComplete
-    simp [List.countP_cons]
-    match hPred : (pred1 head, pred2 head) with
-    | (true, true)   =>
-      let hDisjoint := hDisjoint head
-      simp [tupToAnd hPred] at hDisjoint
-    | (true, false)  =>
-      simp [tupToAnd hPred]
-      let hAssoc := Nat.add_assoc (List.countP pred1 tail) 1 (List.countP pred2 tail)
-      let hComm := Nat.add_comm 1 (List.countP pred2 tail)
-      rw [hAssoc, hComm]
-      let hAssoc' := Nat.add_assoc (List.countP pred1 tail) (List.countP pred2 tail) 1
-      simp [← hAssoc', hRec]
-    | (false, true)  =>
-      simp [tupToAnd hPred]
-      let hAssoc := Nat.add_assoc (List.countP pred1 tail) (List.countP pred2 tail) 1
-      let hComm := Nat.add_comm 1 (List.countP pred2 tail)
-      rw [← hAssoc, hRec]
-    | (false, false) =>
-      let h := hComplete head
-      simp [tupToAnd hPred] at h
+  | []       => simp
+  | [_]      => grind
+  | hd :: tl => have := countCompleteList (xs := tl) hDisjoint hComplete; grind
 
 theorem countComplete {pred1 pred2 : α → Bool} {xs : Vector α n} (hDisjoint : ∀ a, pred1 a != pred2 a) (hComplete : ∀ a, pred1 a || pred2 a)
   : Vector.countP pred1 xs + Vector.countP pred2 xs = Vector.size xs := by
