@@ -97,16 +97,16 @@ theorem countComplete {pred1 pred2 : α → Bool} {xs : Vector α n} (hDisjoint 
 -- Tic-tac-toe game
 
 inductive Player where
-  | X : Player
-  | O : Player
+  | X
+  | O
 deriving Repr, DecidableEq
 
 inductive Cell where
-  | Empty : Cell
-  | Occupied : Player → Cell
+  | empty
+  | occupied : Player → Cell
 deriving Repr, DecidableEq
 
-theorem cellNeqEmptyOccupied {player} : (Cell.Empty == Cell.Occupied player) = false := by
+theorem cellNeqEmptyOccupied {player} : (Cell.empty == .occupied player) = false := by
   grind
 
 def Board := Vector Cell 9 deriving Repr
@@ -117,9 +117,9 @@ instance : Membership Cell Board := by
   infer_instance
 
 inductive GameStatus where
-  | InProgress : GameStatus
-  | Won : Player → GameStatus -- `Player` indicates who won
-  | Draw : GameStatus
+  | inProgress
+  | won : Player → GameStatus -- `Player` indicates who won
+  | draw
 deriving Repr, DecidableEq
 
 structure TicTacToeState where
@@ -128,37 +128,37 @@ structure TicTacToeState where
 deriving Repr
 
 def emptyBoard : Board :=
-  Vector.replicate 9 Cell.Empty
+  Vector.replicate 9 .empty
 
 def initialGameState : TicTacToeState :=
-  { board := emptyBoard, status := GameStatus.InProgress }
+  { board := emptyBoard, status := .inProgress }
 
-def isEmptyPosition (board : Board) (pos : Position) : Bool := board.get pos == Cell.Empty
+def isEmptyPosition (board : Board) (pos : Position) : Bool := board.get pos == .empty
 
 def switchPlayer (player : Player) : Player :=
   match player with
-  | Player.X => Player.O
-  | Player.O => Player.X
+  | .X => .O
+  | .O => .X
 
 theorem switchPlayerIdentity (player : Player) : switchPlayer (switchPlayer player) = player := by
   simp [switchPlayer]
   match player with
-  | Player.X => trivial
-  | Player.O => trivial
+  | .X => trivial
+  | .O => trivial
 
 theorem switchPlayerNeg (player : Player) : ¬switchPlayer player = player := by
   simp [switchPlayer]
   match player with
-  | Player.X => trivial
-  | Player.O => trivial
+  | .X => trivial
+  | .O => trivial
 
-def isBoardFull (board : Board) : Bool := Vector.count Cell.Empty board == 0
+def isBoardFull (board : Board) : Bool := Vector.count .empty board == 0
 
 def countMarkedCells (board : Board) (player : Player) : Nat :=
-  board.countP (· == Cell.Occupied player)
+  board.countP (· == .occupied player)
 
 def checkWin (board : Board) (player : Player) : Bool :=
-  let playerCell := Cell.Occupied player
+  let playerCell := .occupied player
   let winningLines : List (List (Fin 9)) := [
     -- Rows
     [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -173,28 +173,28 @@ def checkWin (board : Board) (player : Player) : Bool :=
     line.countP (fun pos => board.get pos == playerCell) >= 3)
 
 def turnNumber (state : TicTacToeState) : Nat :=
-  9 - state.board.count Cell.Empty
+  9 - state.board.count .empty
 
 def currentPlayer (state : TicTacToeState) : Player :=
-  if turnNumber state % 2 == 0 then Player.X else Player.O
+  if turnNumber state % 2 == 0 then .X else .O
 
 def wellFormedGame (state : TicTacToeState) : Bool :=
   match state.status with
-  | GameStatus.InProgress =>
+  | .inProgress =>
       !isBoardFull state.board
-      && !checkWin state.board Player.X
-      && !checkWin state.board Player.O
-      && (currentPlayer state == Player.O && countMarkedCells state.board Player.O + 1 == countMarkedCells state.board Player.X || currentPlayer state == Player.X && countMarkedCells state.board Player.O == countMarkedCells state.board Player.X)
-  | GameStatus.Won victoriousPlayer =>
+      && !checkWin state.board .X
+      && !checkWin state.board .O
+      && (currentPlayer state == .O && countMarkedCells state.board .O + 1 == countMarkedCells state.board .X || currentPlayer state == .X && countMarkedCells state.board .O == countMarkedCells state.board .X)
+  | .won victoriousPlayer =>
       checkWin state.board victoriousPlayer
       && !checkWin state.board (switchPlayer victoriousPlayer)
-      && (victoriousPlayer == Player.O && countMarkedCells state.board Player.O == countMarkedCells state.board Player.X || victoriousPlayer == Player.X && countMarkedCells state.board Player.O + 1 == countMarkedCells state.board Player.X)
-  | GameStatus.Draw =>
+      && (victoriousPlayer == .O && countMarkedCells state.board .O == countMarkedCells state.board .X || victoriousPlayer == .X && countMarkedCells state.board .O + 1 == countMarkedCells state.board .X)
+  | .draw =>
       isBoardFull state.board
-      && !checkWin state.board Player.X
-      && !checkWin state.board Player.O
-      && countMarkedCells state.board Player.O == 4
-      && countMarkedCells state.board Player.X == 5
+      && !checkWin state.board .X
+      && !checkWin state.board .O
+      && countMarkedCells state.board .O == 4
+      && countMarkedCells state.board .X == 5
 
 theorem initialGameStateIsWellFormed (state : TicTacToeState) {h: state = initialGameState} : wellFormedGame state := by
   unfold initialGameState at h
@@ -209,12 +209,12 @@ theorem initialGameStateIsWellFormed (state : TicTacToeState) {h: state = initia
   simp at hBoard
   rw [hBoard]
 
-  have hCurrentPlayer : currentPlayer state = Player.X := by
+  have hCurrentPlayer : currentPlayer state = .X := by
     simp [currentPlayer, turnNumber, hBoard, emptyBoard]
 
   simp [hCurrentPlayer]
 
-  have hGetFromEmptyBoard (i : Position) : Vector.get emptyBoard i = Cell.Empty := by
+  have hGetFromEmptyBoard (i : Position) : Vector.get emptyBoard i = .empty := by
     unfold emptyBoard Vector.replicate Vector.get Vector.toArray
     simp
 
@@ -227,38 +227,38 @@ theorem initialGameStateIsWellFormed (state : TicTacToeState) {h: state = initia
     simp [countMarkedCells, emptyBoard]
 
   simp [
-    hCheckWinEmpty Player.X,
-    hCheckWinEmpty Player.O,
+    hCheckWinEmpty .X,
+    hCheckWinEmpty .O,
     hBoardNotFull,
-    hCheckMarkedCells Player.X,
-    hCheckMarkedCells Player.O
+    hCheckMarkedCells .X,
+    hCheckMarkedCells .O
   ]
 
-def makeMove (state : TicTacToeState) (pos : Position) (_ : state.status = GameStatus.InProgress) (_ : isEmptyPosition state.board pos) (_ : wellFormedGame state) : TicTacToeState :=
+def makeMove (state : TicTacToeState) (pos : Position) (_ : state.status = .inProgress) (_ : isEmptyPosition state.board pos) (_ : wellFormedGame state) : TicTacToeState :=
   let player := currentPlayer state
-  let newBoard := state.board.set pos.val (Cell.Occupied player)
+  let newBoard := state.board.set pos.val (.occupied player)
   let newStatus :=
     if checkWin newBoard player then
-      GameStatus.Won player
+      .won player
     else if isBoardFull newBoard then
-      GameStatus.Draw
+      .draw
     else
-      GameStatus.InProgress
+      .inProgress
   { board := newBoard, status := newStatus }
 
 theorem noWinWithoutOwnMove
   (board : Board) (player : Player) (pos : Position) (hIsEmpty : isEmptyPosition board pos) (hNoWin : checkWin board player = false)
-  : checkWin (Vector.set board pos.val (Cell.Occupied (switchPlayer player))) player = false := by
+  : checkWin (Vector.set board pos.val (.occupied (switchPlayer player))) player = false := by
 
   -- `newBoard` is the board after the other player has made a move
-  let newBoard := Vector.set board pos.val (Cell.Occupied (switchPlayer player))
+  let newBoard := Vector.set board pos.val (.occupied (switchPlayer player))
 
   -- The cell at pos is now occupied by them
-  have cellAtPosIsOccupiedByOtherPlayer : Vector.get newBoard pos = Cell.Occupied (switchPlayer player) := by
+  have cellAtPosIsOccupiedByOtherPlayer : Vector.get newBoard pos = .occupied (switchPlayer player) := by
     simp [isEmptyPosition] at hIsEmpty
     match hMatch : Vector.get board pos with
-    | Cell.Occupied a => simp [hMatch] at hIsEmpty
-    | Cell.Empty => simp [newBoard, Vector.set, Vector.get]
+    | .occupied a => simp [hMatch] at hIsEmpty
+    | .empty => simp [newBoard, Vector.set, Vector.get]
 
   -- Other cells were not modified
   have getFromNewBoardRespectsPreviouslyOccupied {i} {hIsNotPos : ¬pos = i}
@@ -269,7 +269,7 @@ theorem noWinWithoutOwnMove
       apply Fin.ext
       simp [h]
 
-    let hGetFromBoardUnchanged := Vector.getElem_set_ne (xs := board) (x := Cell.Occupied (switchPlayer player)) pos.2 i.2 (h := hDistinct)
+    let hGetFromBoardUnchanged := Vector.getElem_set_ne (xs := board) (x := .occupied (switchPlayer player)) pos.2 i.2 (h := hDistinct)
     simp [newBoard]
     simp only [Vector.get, Fin.cast, Vector.getElem_toArray]
     simp [hGetFromBoardUnchanged]
@@ -278,20 +278,20 @@ theorem noWinWithoutOwnMove
   simp [checkWin]
 
   have setAnywhereLeavesSelectionUntouched {i}
-    : (Vector.get board i == Cell.Occupied player) = (Vector.get newBoard i == Cell.Occupied player) := by
+    : (Vector.get board i == .occupied player) = (Vector.get newBoard i == .occupied player) := by
     by_cases hPos : pos = i
     .
       simp [isEmptyPosition] at hIsEmpty
       simp [← hPos, cellAtPosIsOccupiedByOtherPlayer, hIsEmpty, cellNeqEmptyOccupied, switchPlayerNeg]
     .
       let hGetFromBoardUnchanged := getFromNewBoardRespectsPreviouslyOccupied (hIsNotPos := hPos)
-      exact Eq.symm (congrArg (· == Cell.Occupied player) hGetFromBoardUnchanged)
+      exact Eq.symm (congrArg (· == .occupied player) hGetFromBoardUnchanged)
 
   -- For each count, we know that it doesn't change after the Vector.set
   have noCountChange
     {x y z : Position}
-    (hCountBeforeMove : List.countP (fun i => Vector.get board i == Cell.Occupied player) [x, y, z] < 3)
-    : List.countP (fun i => Vector.get newBoard i == Cell.Occupied player) [x, y, z] < 3 := by
+    (hCountBeforeMove : List.countP (fun i => Vector.get board i == .occupied player) [x, y, z] < 3)
+    : List.countP (fun i => Vector.get newBoard i == .occupied player) [x, y, z] < 3 := by
 
     -- Unfold
     simp [List.countP, List.countP.go, List.countP.go, List.countP.go]
@@ -304,7 +304,7 @@ theorem noWinWithoutOwnMove
     ]
 
     -- Fold back
-    change List.countP (fun i => Vector.get board i == Cell.Occupied player) [x, y, z] < 3
+    change List.countP (fun i => Vector.get board i == .occupied player) [x, y, z] < 3
     exact hCountBeforeMove
 
   simp [
@@ -324,32 +324,32 @@ theorem moveIncrementsTurnNumber
   (newState : TicTacToeState)
   (pos : Position)
   (hIsEmpty : isEmptyPosition state.board pos)
-  (hNewBoard : newState.board = Vector.set state.board pos.val (Cell.Occupied (currentPlayer state)))
+  (hNewBoard : newState.board = Vector.set state.board pos.val (.occupied (currentPlayer state)))
   : turnNumber newState = turnNumber state + 1 := by
   simp [turnNumber]
 
-  have hAtLeastOneNonEmpty : Cell.Empty ∈ state.board := by
+  have hAtLeastOneNonEmpty : .empty ∈ state.board := by
     simp [isEmptyPosition, Vector.get] at hIsEmpty
     let hIsMember := Vector.getElem_mem (xs := state.board) (i := pos.val) pos.2
     simp [hIsEmpty] at hIsMember
     exact hIsMember
 
-  have hCount := Vector.count_pos_iff (xs := state.board) (a := Cell.Empty)
-  have hCountSet := Vector.count_set (xs := state.board) (b := Cell.Empty) (a := Cell.Occupied (currentPlayer state)) (i := pos.val) pos.2
+  have hCount := Vector.count_pos_iff (xs := state.board) (a := .empty)
+  have hCountSet := Vector.count_set (xs := state.board) (b := .empty) (a := .occupied (currentPlayer state)) (i := pos.val) pos.2
 
   simp [isEmptyPosition, Vector.get] at hIsEmpty
   simp [hIsEmpty] at hCountSet
 
-  have hLemma : Vector.count Cell.Empty newState.board + 1 = Vector.count Cell.Empty state.board := by
+  have hLemma : Vector.count .empty newState.board + 1 = Vector.count .empty state.board := by
     simp [hNewBoard]
     simp [hCountSet]
     exact Nat.sub_add_cancel (hCount.mpr hAtLeastOneNonEmpty)
 
   simp [← hLemma]
-  have hNewStateCellEmptyLemma : Vector.count Cell.Empty newState.board ≤ 8 := by
+  have hNewStateCellEmptyLemma : Vector.count .empty newState.board ≤ 8 := by
     simp [hNewBoard, hCountSet, Vector.count_le_size]
 
-  let hNatSub := Nat.sub_add_comm hNewStateCellEmptyLemma (n := 8) (m := 1) (k := Vector.count Cell.Empty newState.board)
+  let hNatSub := Nat.sub_add_comm hNewStateCellEmptyLemma (n := 8) (m := 1) (k := Vector.count .empty newState.board)
   simp at hNatSub
   exact hNatSub
 
@@ -360,7 +360,7 @@ theorem hBoardNotFullIfCellEmpty
   : ¬isBoardFull state.board := by
   simp [isBoardFull]
   simp [isEmptyPosition, Vector.get] at hIsEmpty
-  by_cases h : state.board.count Cell.Empty = 0
+  by_cases h : state.board.count .empty = 0
   .
     let hNoEmpty := state.board.not_mem_of_count_eq_zero h
     let hPosEmpty := state.board.getElem_mem pos.2
@@ -368,7 +368,7 @@ theorem hBoardNotFullIfCellEmpty
     contradiction
   . trivial
 
-theorem cellEmptyCountOfIsEmpty (hIsEmpty : isEmptyPosition board pos) : board.count Cell.Empty ≥ 1 := by
+theorem cellEmptyCountOfIsEmpty (hIsEmpty : isEmptyPosition board pos) : board.count .empty ≥ 1 := by
   simp [isEmptyPosition, Vector.get] at hIsEmpty
   let hPosEmpty := board.getElem_mem pos.2
   simp [hIsEmpty] at hPosEmpty
@@ -379,10 +379,10 @@ theorem moveDecrementsEmptyCellCount
   (newState : TicTacToeState)
   (pos : Position)
   (hIsEmpty : isEmptyPosition state.board pos)
-  (hNewBoard : newState.board = Vector.set state.board pos.val (Cell.Occupied (currentPlayer state)))
-  : newState.board.count Cell.Empty + 1 = state.board.count Cell.Empty := by
+  (hNewBoard : newState.board = Vector.set state.board pos.val (.occupied (currentPlayer state)))
+  : newState.board.count .empty + 1 = state.board.count .empty := by
   simp [hNewBoard]
-  let hCountSet := Vector.count_set (xs := state.board) (a := Cell.Occupied (currentPlayer state)) (b := Cell.Empty) pos.2
+  let hCountSet := Vector.count_set (xs := state.board) (a := .occupied (currentPlayer state)) (b := .empty) pos.2
   simp [hCountSet]
 
   let hIsEmpty' := hIsEmpty
@@ -396,10 +396,10 @@ theorem newBoardIsFullAfterTurn8
   (state : TicTacToeState)
   (newState : TicTacToeState)
   (pos : Position)
-  (_ : state.status = GameStatus.InProgress)
+  (_ : state.status = .inProgress)
   (hIsEmpty : isEmptyPosition state.board pos)
   (_ : wellFormedGame state)
-  (hNewBoard : newState.board = Vector.set state.board pos.val (Cell.Occupied (currentPlayer state)))
+  (hNewBoard : newState.board = Vector.set state.board pos.val (.occupied (currentPlayer state)))
   : isBoardFull newState.board = (turnNumber state == 8) := by
 
   let hAtLeastOneEmpty := hBoardNotFullIfCellEmpty state pos hIsEmpty
@@ -407,7 +407,7 @@ theorem newBoardIsFullAfterTurn8
   let hAtLeastOneEmpty := Nat.pos_of_ne_zero hAtLeastOneEmpty
 
   simp [isBoardFull, turnNumber]
-  by_cases h : Vector.count Cell.Empty newState.board == 0
+  by_cases h : Vector.count .empty newState.board == 0
   .
     simp [h]
 
@@ -433,10 +433,10 @@ theorem newBoardIsFullAfterTurn8
     let h' := Nat.add_lt_add_right h' 9
     simp only [Nat.zero_add] at h'
 
-    have hTrivial : state.board.count Cell.Empty ≤ 9 := Vector.count_le_size
+    have hTrivial : state.board.count .empty ≤ 9 := Vector.count_le_size
     let h' := Nat.sub_lt_sub_right hTrivial h'
 
-    have hSimplify : Vector.count Cell.Empty state.board - 1 + 9 - Vector.count Cell.Empty state.board = 8 := by
+    have hSimplify : Vector.count .empty state.board - 1 + 9 - Vector.count .empty state.board = 8 := by
       -- Swap (· - 1 + 9) to (· + 9 - 1) so it simplifies
       let hCount := cellEmptyCountOfIsEmpty hIsEmpty
       simp [← Nat.sub_add_comm hCount (m := 9)]
@@ -449,15 +449,15 @@ theorem newBoardIsFullAfterTurn8
 
 theorem noWinnersWhileInProgress
   (state : TicTacToeState)
-  (hInProgress : state.status = GameStatus.InProgress)
+  (hInProgress : state.status = .inProgress)
   (hWellFormed : wellFormedGame state)
-  : checkWin state.board Player.X = false ∧ checkWin state.board Player.O = false := by
+  : checkWin state.board .X = false ∧ checkWin state.board .O = false := by
   simp [wellFormedGame, hInProgress] at hWellFormed
   simp [hWellFormed]
 
 theorem singleWinner
   (state : TicTacToeState)
-  (hWon : state.status = GameStatus.Won winner)
+  (hWon : state.status = .won winner)
   (hWellFormed : wellFormedGame state)
   : checkWin state.board (switchPlayer winner) = false := by
   simp [wellFormedGame, hWon] at hWellFormed
@@ -466,55 +466,55 @@ theorem singleWinner
 theorem playerXCellCount
   (state : TicTacToeState)
   (hWellFormed : wellFormedGame state)
-  : countMarkedCells state.board Player.X = (turnNumber state + 1 ) / 2 := by
+  : countMarkedCells state.board .X = (turnNumber state + 1 ) / 2 := by
   let hWellFormed' := hWellFormed
   simp [countMarkedCells, turnNumber]
 
   have playerCellCount
-    : countMarkedCells state.board Player.X + countMarkedCells state.board Player.O = 9 - Vector.count Cell.Empty state.board := by
+    : countMarkedCells state.board .X + countMarkedCells state.board .O = 9 - Vector.count .empty state.board := by
     simp [countMarkedCells, Vector.count_eq_countP]
 
-    have hDisjoint : ∀ a, (a == Cell.Occupied Player.X -> ¬(a == Cell.Occupied Player.O)) ∧ (a == Cell.Occupied Player.O -> ¬(a == Cell.Occupied Player.X)) := by
+    have hDisjoint : ∀ a : Cell, (a == .occupied .X -> ¬(a == .occupied .O)) ∧ (a == .occupied .O -> ¬(a == .occupied .X)) := by
       intro a
       match a with
-      | Cell.Empty => trivial
-      | Cell.Occupied Player.X => trivial
-      | Cell.Occupied Player.O => trivial
+      | .empty => trivial
+      | .occupied .X => trivial
+      | .occupied .O => trivial
 
-    have hDisjoint' : ∀ a, (a == Cell.Occupied Player.X || a == Cell.Occupied Player.O) != (a == Cell.Empty) := by
+    have hDisjoint' : ∀ a : Cell, (a == .occupied .X || a == .occupied .O) != (a == .empty) := by
       intro a
       match a with
-      | Cell.Empty => trivial
-      | Cell.Occupied Player.X => trivial
-      | Cell.Occupied Player.O => trivial
+      | .empty => trivial
+      | .occupied .X => trivial
+      | .occupied .O => trivial
 
-    have hComplete : ∀ a, a == Cell.Occupied Player.X || a == Cell.Occupied Player.O || a == Cell.Empty := by
+    have hComplete : ∀ a : Cell, a == .occupied .X || a == .occupied .O || a == .empty := by
       intro a
       match a with
-      | Cell.Empty => trivial
-      | Cell.Occupied Player.X => trivial
-      | Cell.Occupied Player.O => trivial
+      | .empty => trivial
+      | .occupied .X => trivial
+      | .occupied .O => trivial
 
-    simp [countDisjoint (xs := state.board) (pred1 := (fun x => x == Cell.Occupied Player.X)) (pred2 := (fun x => x == Cell.Occupied Player.O)) hDisjoint]
-    let hCountComplete := countComplete (xs := state.board) (pred1 := fun x => x == Cell.Occupied Player.X || x == Cell.Occupied Player.O) (pred2 := fun x => x == Cell.Empty) hDisjoint' hComplete
+    simp [countDisjoint (xs := state.board) (pred1 := (fun x => x == .occupied .X)) (pred2 := (fun x => x == .occupied .O)) hDisjoint]
+    let hCountComplete := countComplete (xs := state.board) (pred1 := fun x => x == .occupied .X || x == .occupied .O) (pred2 := fun x => x == .empty) hDisjoint' hComplete
     simp [Vector.size] at hCountComplete
     simp [← hCountComplete]
 
   simp [← playerCellCount]
   match hStatus : state.status with
-  | GameStatus.Draw =>
+  | .draw =>
     simp [wellFormedGame, hStatus] at hWellFormed
     simp [hWellFormed]
     rw [← countMarkedCells]
     simp [hWellFormed]
-  | GameStatus.InProgress =>
+  | .inProgress =>
     simp [wellFormedGame, hStatus] at hWellFormed
     match hCurrentPlayer : currentPlayer state with
-    | Player.X =>
+    | .X =>
       simp [hCurrentPlayer] at hWellFormed
-      simp [hWellFormed, ← Nat.two_mul, Nat.add_div (a := 2 * countMarkedCells state.board Player.X) (b := 1) (c := 2) (by trivial)]
+      simp [hWellFormed, ← Nat.two_mul, Nat.add_div (a := 2 * countMarkedCells state.board .X) (b := 1) (c := 2) (by trivial)]
       simp [countMarkedCells]
-    | Player.O =>
+    | .O =>
       simp [hCurrentPlayer] at hWellFormed
       simp [
         Nat.add_assoc,
@@ -522,21 +522,21 @@ theorem playerXCellCount
         ← Nat.two_mul,
       ]
       simp [countMarkedCells]
-  | GameStatus.Won winner =>
+  | .won winner =>
     simp [wellFormedGame, hStatus] at hWellFormed
     let hSingleWinner := singleWinner state hStatus hWellFormed'
     simp [hSingleWinner] at hWellFormed
     match winner with
-    | Player.X =>
+    | .X =>
       simp at hWellFormed
       simp [Nat.add_assoc, hWellFormed, ← Nat.two_mul]
       simp [countMarkedCells]
-    | Player.O =>
+    | .O =>
       simp at hWellFormed
       simp [
         ← hWellFormed,
         ← Nat.two_mul,
-        Nat.add_div (a := 2 * countMarkedCells state.board Player.O) (b := 1) (c := 2) (by trivial)
+        Nat.add_div (a := 2 * countMarkedCells state.board .O) (b := 1) (c := 2) (by trivial)
       ]
       simp [hWellFormed]
       simp [countMarkedCells]
@@ -544,7 +544,7 @@ theorem playerXCellCount
 theorem makeMovePreservesWellFormedness
   {state : TicTacToeState}
   {pos : Position}
-  {hInProgress : state.status = GameStatus.InProgress}
+  {hInProgress : state.status = .inProgress}
   {hIsEmpty : isEmptyPosition state.board pos}
   {hWellFormed : wellFormedGame state}
   : wellFormedGame (makeMove state pos hInProgress hIsEmpty hWellFormed) := by
@@ -552,7 +552,7 @@ theorem makeMovePreservesWellFormedness
   let hPlayer : player = currentPlayer state := by trivial
   let newState := (makeMove state pos hInProgress hIsEmpty hWellFormed)
   let newBoard := newState.board
-  have hNewBoard : newBoard = Vector.set state.board pos.val (Cell.Occupied player) := by
+  have hNewBoard : newBoard = Vector.set state.board pos.val (.occupied player) := by
     trivial
   have hNewBoard' : newBoard = newState.board := by
     trivial
@@ -562,11 +562,11 @@ theorem makeMovePreservesWellFormedness
 
   have hNoWinnersYet : checkWin state.board player = false ∧ checkWin state.board (switchPlayer player) = false := by
     match player with
-    | Player.X => simp [switchPlayer, hWellFormed]
-    | Player.O => simp [switchPlayer, hWellFormed]
+    | .X => simp [switchPlayer, hWellFormed]
+    | .O => simp [switchPlayer, hWellFormed]
 
-  let pMarkedO := fun x => x == Cell.Occupied Player.O
-  let pMarkedX := fun x => x == Cell.Occupied Player.X
+  let pMarkedO := fun x : Cell => x == .occupied .O
+  let pMarkedX := fun x : Cell => x == .occupied .X
   let hIsEmpty' := hIsEmpty
   simp [isEmptyPosition, Vector.get] at hIsEmpty'
   let hNotMarkedO : ¬pMarkedO (state.board.get pos) := by
@@ -574,10 +574,10 @@ theorem makeMovePreservesWellFormedness
   let hNotMarkedX : ¬pMarkedX (state.board.get pos) := by
     simp [pMarkedX, Vector.get, hIsEmpty']
 
-  let xMarksUntouched := vector_count_set_other (i := pos) (xs := state.board) (pred := pMarkedO) (value := Cell.Occupied Player.X) (hOld := (by trivial)) (hNew := (by trivial))
-  let oMarksUntouched := vector_count_set_other (i := pos) (xs := state.board) (pred := pMarkedX) (value := Cell.Occupied Player.O) (hOld := (by trivial)) (hNew := (by trivial))
-  let xMarksIncreasedByOne := vector_count_set (i := pos) (xs := state.board) (pred := pMarkedX) (value := Cell.Occupied Player.X) (hOld := (by trivial)) (hNew := (by trivial))
-  let oMarksIncreasedByOne := vector_count_set (i := pos) (xs := state.board) (pred := pMarkedO) (value := Cell.Occupied Player.O) (hOld := (by trivial)) (hNew := (by trivial))
+  let xMarksUntouched := vector_count_set_other (i := pos) (xs := state.board) (pred := pMarkedO) (value := .occupied .X) (hOld := (by trivial)) (hNew := (by trivial))
+  let oMarksUntouched := vector_count_set_other (i := pos) (xs := state.board) (pred := pMarkedX) (value := .occupied .O) (hOld := (by trivial)) (hNew := (by trivial))
+  let xMarksIncreasedByOne := vector_count_set (i := pos) (xs := state.board) (pred := pMarkedX) (value := .occupied .X) (hOld := (by trivial)) (hNew := (by trivial))
+  let oMarksIncreasedByOne := vector_count_set (i := pos) (xs := state.board) (pred := pMarkedO) (value := .occupied .O) (hOld := (by trivial)) (hNew := (by trivial))
   simp [pMarkedO] at xMarksUntouched
   simp [pMarkedX] at xMarksIncreasedByOne
   simp [pMarkedX] at oMarksUntouched
@@ -600,7 +600,7 @@ theorem makeMovePreservesWellFormedness
     -- The cell distribution is well formed
     simp [hNewBoard]
     match hCurrentPlayer : player with
-    | Player.X =>
+    | .X =>
       simp [← hPlayer, hCurrentPlayer, countMarkedCells] at hPreviousCellCount
       simp [
         countMarkedCells,
@@ -608,7 +608,7 @@ theorem makeMovePreservesWellFormedness
         congrArg (· + 1) hPreviousCellCount,
         xMarksIncreasedByOne
       ]
-    | Player.O =>
+    | .O =>
       simp [← hPlayer, hCurrentPlayer, countMarkedCells] at hPreviousCellCount
       simp [
         countMarkedCells,
@@ -659,13 +659,13 @@ theorem makeMovePreservesWellFormedness
     . -- The game goes on
       simp [hDraw]
 
-      have hNoWinners : checkWin newBoard Player.X = false ∧ checkWin newBoard Player.O = false := by
+      have hNoWinners : checkWin newBoard .X = false ∧ checkWin newBoard .O = false := by
         match hPlayerToCheck : player with
-        | Player.X =>
+        | .X =>
             simp [hPlayerToCheck] at hWonLeft
             simp [hPlayerToCheck, switchPlayer] at hWonRight
             simp [hWonLeft, hWonRight]
-        | Player.O =>
+        | .O =>
             simp [hPlayerToCheck] at hWonLeft
             simp [hPlayerToCheck, switchPlayer] at hWonRight
             simp [hWonLeft, hWonRight]
@@ -692,13 +692,13 @@ theorem makeMovePreservesWellFormedness
 
       simp [hNoWinners]
       match hCurrentPlayer : player with
-      | Player.X =>
+      | .X =>
         rw [hPlayer] at hCurrentPlayer
         conv =>
-          pattern currentPlayer { board := newBoard, status := GameStatus.InProgress }
+          pattern currentPlayer { board := newBoard, status := .inProgress }
           change currentPlayer newState
         conv =>
-          pattern currentPlayer { board := newBoard, status := GameStatus.InProgress }
+          pattern currentPlayer { board := newBoard, status := .inProgress }
           change currentPlayer newState
         simp [hNextPlayer, hCurrentPlayer, switchPlayer]
         simp [noWinnersWhileInProgress state hInProgress hWellFormed', hCurrentPlayer] at hWellFormed
@@ -706,13 +706,13 @@ theorem makeMovePreservesWellFormedness
         rw [← countMarkedCells]
         simp [hWellFormed]
         simp [countMarkedCells, xMarksIncreasedByOne]
-      | Player.O =>
+      | .O =>
         rw [hPlayer] at hCurrentPlayer
         conv =>
-          pattern currentPlayer { board := newBoard, status := GameStatus.InProgress }
+          pattern currentPlayer { board := newBoard, status := .inProgress }
           change currentPlayer newState
         conv =>
-          pattern currentPlayer { board := newBoard, status := GameStatus.InProgress }
+          pattern currentPlayer { board := newBoard, status := .inProgress }
           change currentPlayer newState
         simp [hNextPlayer, hCurrentPlayer, switchPlayer]
         simp [noWinnersWhileInProgress state hInProgress hWellFormed', hCurrentPlayer] at hWellFormed
@@ -737,7 +737,7 @@ theorem makeMovePreservesWellFormedness
 theorem playersAlternateAfterMove
   {state : TicTacToeState}
   {pos : Position}
-  {hInProgress : state.status = GameStatus.InProgress}
+  {hInProgress : state.status = .inProgress}
   {hIsEmpty : isEmptyPosition state.board pos}
   {hWellFormed : wellFormedGame state}
   {newState : TicTacToeState}
@@ -762,12 +762,12 @@ theorem playersAlternateAfterMove
 theorem cellMarkedAfterMove
   {state : TicTacToeState}
   {pos : Position}
-  {hInProgress : state.status = GameStatus.InProgress}
+  {hInProgress : state.status = .inProgress}
   {hIsEmpty : isEmptyPosition state.board pos}
   {hWellFormed : wellFormedGame state}
   {newState : TicTacToeState}
   (h: makeMove state pos hInProgress hIsEmpty hWellFormed = newState)
-  : newState.board.get pos = Cell.Occupied (currentPlayer state) := by
+  : newState.board.get pos = .occupied (currentPlayer state) := by
   unfold makeMove at h
   let h' := congrArg (fun x : TicTacToeState => x.board) h
   simp at h'
